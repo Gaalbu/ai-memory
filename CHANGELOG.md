@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Corrected the desktop extension research table (`docs/desktop/extensions.md`)
+  against current vendor docs: Codex plugins with hooks are not eligible for the
+  public directory, Cursor hooks need the Cursor Plugin format, Antigravity
+  plugins can bundle MCP, and Zed is deprecating MCP extensions. (#1166)
 - Fixed Cursor tool calls being stored with no title or content: Cursor's own
   hooks, and the Claude Code hooks Cursor also runs, send Claude's
   `tool_name`/`tool_input` fields, but Cursor was missing from the tool-capture
