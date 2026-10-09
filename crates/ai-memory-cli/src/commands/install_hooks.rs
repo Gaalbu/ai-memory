@@ -6341,11 +6341,22 @@ fn apply_to_zero_hooks(
              re-enable them."
         );
     }
-    println!("# NOTE: Zero discards sessionStart hook stdout — capture works, but");
-    println!("#       handoff injection does not. Recover a prior session's handoff");
-    println!("#       via the MCP `memory_handoff_accept` tool.");
+    print!("{ZERO_NOTES}");
     Ok(())
 }
+
+/// Caveats printed with every Zero hook install (#1172).
+const ZERO_NOTES: &str = "\
+# NOTE: Zero discards sessionStart hook stdout — handoff injection does not
+#       work. Recover a prior session's handoff via the MCP
+#       `memory_handoff_accept` tool.
+# NOTE: Zero runs hooks inside its sandbox, whose default policy denies
+#       network (a separate network namespace on Linux), so hooks cannot
+#       reach server_url, not even on 127.0.0.1. Events are kept in the
+#       hook spool instead; deliver them by running `ai-memory hook-drain`
+#       from a normal shell after the Zero session, or allow network for
+#       hooks in Zero's sandbox policy.
+";
 
 /// Print Zero's hooks.json to stdout (dry-run counterpart of
 /// [`apply_to_zero_hooks`]).
@@ -6371,9 +6382,7 @@ fn render_zero(
         println!("# Auth: token embedded in each hook's args below.");
         println!("#       Treat hooks.json as sensitive (chmod 600).");
     }
-    println!("# NOTE: Zero discards sessionStart hook stdout — capture works, but");
-    println!("#       handoff injection does not. Recover a prior session's handoff");
-    println!("#       via the MCP `memory_handoff_accept` tool.");
+    print!("{ZERO_NOTES}");
     println!();
     println!("{serialized}");
     Ok(())
@@ -14204,5 +14213,18 @@ mod identity_parity_tests {
             String::from_utf8_lossy(&output.stderr),
             "?identity=acme%2Fplatform&identity_src=explicit||"
         );
+    }
+}
+
+#[cfg(test)]
+mod zero_notes_tests {
+    use super::ZERO_NOTES;
+
+    #[test]
+    fn zero_notes_explain_sandbox_network_and_drain() {
+        assert!(ZERO_NOTES.contains("sandbox"));
+        assert!(ZERO_NOTES.contains("ai-memory hook-drain"));
+        assert!(ZERO_NOTES.contains("memory_handoff_accept"));
+        assert!(ZERO_NOTES.lines().all(|l| l.starts_with('#')));
     }
 }

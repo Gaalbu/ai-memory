@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Fixed `install-hooks --agent zero` not saying that Zero's sandbox denies
+  network to hooks: the note now explains that events stay in the hook spool
+  under Zero's default policy and are delivered by `ai-memory hook-drain` from a
+  normal shell (or by allowing network for hooks). A `.drain.lock` file left
+  behind with no owner never blocks a drain; a regression test pins that. (#1172)
 - Fixed Cursor tool calls being stored with no title or content: Cursor's own
   hooks, and the Claude Code hooks Cursor also runs, send Claude's
   `tool_name`/`tool_input` fields, but Cursor was missing from the tool-capture
