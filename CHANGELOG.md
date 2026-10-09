@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Documented Prime Agent (PrimeIntellect-ai/prime-agent): its native remote
+  HTTP MCP config and lifecycle capture through the generated Pi extension with
+  `PI_CODING_AGENT_DIR=~/.prime/agent`, plus a support-matrix row. (#1163)
+
 ### Fixed
 - Fixed Cursor tool calls being stored with no title or content: Cursor's own
   hooks, and the Claude Code hooks Cursor also runs, send Claude's
