@@ -97,6 +97,33 @@ cargo run --release -p ai-memory-eval -- retrieval --candidate-embeddings local
 cargo run --release -p ai-memory-eval -- retrieval --candidate
 ```
 
+### Belief-strength authority weight (sample 60, 2026-10-09)
+
+Zero-LLM baseline vs the same config with
+`AI_MEMORY_RETRIEVAL__BELIEF_AUTHORITY_WEIGHT=0.3`, `--sample 60` (all 60 fall
+in the `single-session-user` slice), commit `c97766d5`, 4-thread Xeon:
+
+```bash
+cargo run --release -p ai-memory-eval -- retrieval --sample 60 \
+    --candidate-server-env AI_MEMORY_RETRIEVAL__BELIEF_AUTHORITY_WEIGHT=0.3
+```
+
+| metric | baseline | candidate | delta |
+|---|---|---|---|
+| hit@1 | 0.633 | 0.633 | +0.000 |
+| hit@5 | 0.700 | 0.700 | +0.000 |
+| hit@10 | 0.717 | 0.717 | +0.000 |
+| recall@10 | 0.717 | 0.717 | +0.000 |
+| latency p50 ms | 98 | 104 | +6 |
+| latency p95 ms | 334 | 485 | +151 |
+| ctx tok mean | 301.5 | 301.5 | +0.0 |
+
+No ranking change and a latency cost: the zero-LLM ingest writes almost no
+`page_evidence`, so `confidence` is flat and the weight only adds the belief
+query. The default stays `0.0`. A full 500-question run did not finish on a
+15 GB VM (the server stalled at ~260 questions under memory pressure); the
+next useful measurement is an LLM-consolidated store, where evidence exists.
+
 ### Illustrative sample-20 run (triple + QA-accuracy, NOT a baseline)
 
 Recorded to show the triple + QA columns on a real run. **`--sample 20`, 20

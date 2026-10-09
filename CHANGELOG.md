@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Docs
+- Recorded the first R2 A/B for `[retrieval] belief_authority_weight`
+  (zero-LLM, sample 60): no accuracy change and +151 ms p95, so the default
+  stays `0.0` (`docs/benchmarks/retrieval-ab-r2.md`,
+  `docs/competitive-parity.md`).
+
 ### Fixed
 - Fixed Cursor tool calls being stored with no title or content: Cursor's own
   hooks, and the Claude Code hooks Cursor also runs, send Claude's
