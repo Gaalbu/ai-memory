@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Added a thin TypeScript client for the MCP endpoint
+  (`companions/ai-memory-client-ts`): one handshake, session and bearer
+  forwarding, unwrapped tool payloads, typed HTTP/protocol/tool errors, and
+  helpers for pages, query, recent, status and handoffs. (#1165)
+
 ### Fixed
 - Fixed Cursor tool calls being stored with no title or content: Cursor's own
   hooks, and the Claude Code hooks Cursor also runs, send Claude's

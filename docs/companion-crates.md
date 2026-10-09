@@ -83,6 +83,13 @@ Slice 1 (read-only export) shipped as
 [`ai-memory-wikisync`](#ai-memory-wikisync-read-only-team-wiki-export)
 below; the remaining slices are tracked in #986.
 
+## `ai-memory-client-ts`: TypeScript MCP client
+
+[`ai-memory-client-ts`](../companions/ai-memory-client-ts/README.md) is a
+dependency-free ESM package with `.d.ts` types that wraps the MCP endpoint for
+integrators (#1165). It talks to the server only over MCP, holds no store or
+config, and versions on its own; test it with `npm test` in its directory.
+
 ## `ai-memory-client`: shared private capture privacy
 
 [`ai-memory-client`](../companions/ai-memory-client) supplies four privacy

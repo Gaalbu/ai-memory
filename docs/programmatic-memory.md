@@ -62,6 +62,10 @@ mcp <<'JSON'
 JSON
 ```
 
+A TypeScript client that does the handshake, session header and error
+handling below lives in
+[`companions/ai-memory-client-ts`](../companions/ai-memory-client-ts/README.md).
+
 Check JSON-RPC `error` and `result.isError` even on HTTP 200. Tool payloads are
 JSON encoded inside `result.content[].text`. A page write returns `page_id` and
 `path`; a query returns `hits`.
