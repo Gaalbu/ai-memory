@@ -12,6 +12,11 @@ version in [`docs/changelog/`](docs/changelog/):
 ## [Unreleased]
 
 ### Fixed
+- Fixed `install-hooks --agent zero` not saying that Zero's sandbox denies
+  network to hooks: the note now explains that events stay in the hook spool
+  under Zero's default policy and are delivered by `ai-memory hook-drain` from a
+  normal shell (or by allowing network for hooks). A `.drain.lock` file left
+  behind with no owner never blocks a drain; a regression test pins that. (#1172)
 - Fixed the thin-client commands ignoring a custom `bind`, which could write
   into the wrong store. `server_url` defaulted to `http://127.0.0.1:49374`
   and was never derived from `bind`, so `ai-memory --data-dir X status` (and

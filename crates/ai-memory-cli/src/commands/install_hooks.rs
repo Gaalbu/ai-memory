@@ -15332,3 +15332,18 @@ mod identity_parity_tests {
         );
     }
 }
+
+#[cfg(test)]
+mod zero_notes_tests {
+    use super::zero_install_notes;
+
+    #[test]
+    fn zero_notes_explain_sandbox_network_and_drain() {
+        let notes = zero_install_notes("/data/ai-memory");
+        assert!(notes.contains("sandbox"));
+        assert!(notes.contains("127.0.0.1"));
+        assert!(notes.contains("ai-memory hook-drain"));
+        assert!(notes.contains("memory_handoff_accept"));
+        assert!(notes.lines().all(|l| l.starts_with('#')));
+    }
+}

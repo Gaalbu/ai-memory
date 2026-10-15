@@ -2404,6 +2404,19 @@ mod tests {
     use super::*;
 
     #[test]
+    fn leftover_drain_lock_file_without_owner_does_not_block_drains() {
+        let tmp = tempfile::tempdir().unwrap();
+        let spool = tmp.path().join("hook-spool");
+        std::fs::create_dir_all(&spool).unwrap();
+        std::fs::write(spool.join(".drain.lock"), b"").unwrap();
+        assert!(
+            acquire_drain_lock(&spool, DrainLockWait::NoWait)
+                .unwrap()
+                .is_some()
+        );
+    }
+
+    #[test]
     fn correlated_session_entries_quarantine_and_restore_without_touching_others() {
         let temp = tempfile::tempdir().unwrap();
         let spool = temp.path().join("hook-spool");
