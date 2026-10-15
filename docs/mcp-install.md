@@ -1571,6 +1571,49 @@ OMP / Oh My Pi remains separate: use `--client omp` / `--agent omp` (or
 
 ---
 
+## Prime Agent (PrimeIntellect-ai/prime-agent)
+
+**Status:** 🟡 Documented, not yet verified end to end (#1163). Prime Agent's
+npm bundle is a hard fork of Pi, so the two Pi-derived routes below apply; a
+dedicated `--client prime-agent` waits on a live verification.
+
+**MCP (native, remote HTTP).** Prime Agent reads `mcpServers` from
+`~/.prime/agent/settings.json` (global) or `.prime/agent/settings.json`
+(per-project, overrides global). `type: "http"` is Streamable HTTP:
+
+```jsonc
+{
+  "mcpServers": {
+    "ai-memory": {
+      "type": "http",
+      "url": "http://127.0.0.1:49374/mcp",
+      "headers": { "Authorization": "Bearer <token>" },
+      "enabled": true
+    }
+  }
+}
+```
+
+Drop `headers` on a loopback server without a token. Prime Agent surfaces each
+MCP server as a Python skill package in its IPython kernel rather than as agent
+tools, so the model calls `await ai_memory.memory_query(...)`. It is a static
+MCP client: pass `workspace` and `project` on every project-scoped call.
+
+**Lifecycle capture (Pi extension).** Prime Agent loads TypeScript extensions
+from `~/.prime/agent/extensions/` with Pi's `pi.on(...)` events, so the
+generated Pi extension can be pointed at that home:
+
+```bash
+PI_CODING_AGENT_DIR=~/.prime/agent ai-memory install-hooks --agent pi --apply
+```
+
+This writes `~/.prime/agent/extensions/ai-memory-pi.ts`. Sessions are recorded
+under the Pi agent kind; Prime Agent's sessions live in
+`~/.prime/agent/sessions/<id>.jsonl`, which a later managed-run adapter would
+read (see `docs/managed-harness-contributions.md`).
+
+---
+
 ## Schema dialects for strict upstreams
 
 Some model APIs validate MCP tool parameter schemas against a narrower dialect

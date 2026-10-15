@@ -11,6 +11,11 @@ version in [`docs/changelog/`](docs/changelog/):
 
 ## [Unreleased]
 
+### Added
+- Documented Prime Agent (PrimeIntellect-ai/prime-agent): its native remote
+  HTTP MCP config and lifecycle capture through the generated Pi extension with
+  `PI_CODING_AGENT_DIR=~/.prime/agent`, plus a support-matrix row. (#1163)
+
 ### Fixed
 - Fixed the thin-client commands ignoring a custom `bind`, which could write
   into the wrong store. `server_url` defaulted to `http://127.0.0.1:49374`
