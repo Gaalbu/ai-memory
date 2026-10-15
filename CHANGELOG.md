@@ -12,6 +12,10 @@ version in [`docs/changelog/`](docs/changelog/):
 ## [Unreleased]
 
 ### Fixed
+- Corrected the desktop extension research table (`docs/desktop/extensions.md`)
+  against current vendor docs: Codex plugins with hooks are not eligible for the
+  public directory, Cursor hooks need the Cursor Plugin format, Antigravity
+  plugins can bundle MCP, and Zed is deprecating MCP extensions. (#1166)
 - Fixed the thin-client commands ignoring a custom `bind`, which could write
   into the wrong store. `server_url` defaulted to `http://127.0.0.1:49374`
   and was never derived from `bind`, so `ai-memory --data-dir X status` (and
