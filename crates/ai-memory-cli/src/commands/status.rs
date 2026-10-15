@@ -238,12 +238,18 @@ pub async fn run(config: &Config, args: StatusArgs) -> Result<()> {
     // the one question this section exists for could not be asked in the one
     // situation that prompts it.
     let spool = spool_health(&spool_dir(&config.data_dir));
+    // The usual quarantine leaves nothing listening, so the hint has to be
+    // known before the status request, and printed when that request fails.
+    let windows_logon = super::windows_logon_health::inspect_live();
 
     let report: Report = match get_json::<Report>(&ep, "/admin/status", &[]).await {
         Ok(report) => report,
         Err(err) => {
             report_offline_spool(&spool, args.json);
             report_offline_recovery_hint(config, &spool, args.json);
+            if let Some(problem) = &windows_logon {
+                eprintln!("{}", super::windows_logon_health::render_human(problem));
+            }
             return Err(err);
         }
     };
@@ -266,6 +272,7 @@ pub async fn run(config: &Config, args: StatusArgs) -> Result<()> {
                 capture_mode,
                 &ep,
                 auth_posture,
+                windows_logon.as_ref(),
             ))?
         );
     } else {
@@ -275,6 +282,9 @@ pub async fn run(config: &Config, args: StatusArgs) -> Result<()> {
         println!("  db:           {}", report.db_path);
         println!("  bind:         {}", report.bind);
         println!("  auth:         {}", auth_posture.line());
+        if let Some(problem) = &windows_logon {
+            println!("{}", super::windows_logon_health::render_human(problem));
+        }
         println!(
             "  pages:        {} (all versions: {})",
             report.counts.pages_latest, report.counts.pages_all
@@ -496,8 +506,9 @@ fn json_report(
     capture_mode: &str,
     endpoint: &ServerEndpoint,
     auth_posture: crate::local_auth::AuthPosture,
+    windows_logon: Option<&super::windows_logon_health::MissingLogonBinary>,
 ) -> serde_json::Value {
-    serde_json::json!({
+    let mut value = serde_json::json!({
         "version": report.version,
         "data_dir": report.data_dir,
         "bind": report.bind,
@@ -522,7 +533,17 @@ fn json_report(
         "ingest": report.ingest,
         "client": { "server_url": endpoint.url, "auth": endpoint.auth_token.is_some() },
         "auth_posture": { "posture": auth_posture, "fix": auth_posture.fix() },
-    })
+    });
+    // Absent when there is nothing to say, so existing consumers keep the
+    // keys they already read.
+    if let Some(problem) = windows_logon {
+        value["windows_logon"] = serde_json::json!({
+            "classification": problem.classification,
+            "executable": problem.executable,
+            "detail": problem.detail,
+        });
+    }
+    value
 }
 
 fn provider_health_line(role: &ProviderRoleHealthSnapshot) -> String {
@@ -617,7 +638,9 @@ mod tests {
             "denylist",
             &endpoint,
             crate::local_auth::AuthPosture::NoneLoopback,
+            None,
         );
+        assert!(value.get("windows_logon").is_none());
         assert_eq!(value["auth_posture"]["posture"], "none_loopback");
         assert_eq!(value["auth_posture"]["fix"], "ai-memory auth enable");
         for key in [
@@ -638,6 +661,83 @@ mod tests {
         }
         assert_eq!(value["recovery"]["journal_pending"], 2);
         assert_eq!(value["counts"]["observations"], 4);
+    }
+
+    /// A mocked Run value whose executable is not on disk shows up in status
+    /// JSON. The same command with the file present adds no key.
+    #[test]
+    fn status_json_reports_a_logon_entry_whose_binary_is_gone() {
+        let dir = tempfile::tempdir().unwrap();
+        let missing = dir.path().join("ai-memory.exe");
+        assert!(!missing.is_file());
+        let command = format!(
+            "\"{}\" --data-dir \"{}\" --config \"{}\" service-host",
+            missing.display(),
+            dir.path().display(),
+            dir.path().join("config.toml").display()
+        );
+        let problem = super::super::windows_logon_health::inspect(
+            &super::super::windows_logon_health::FixedRunValue(Some(command)),
+            &std::path::Path::is_file,
+        )
+        .expect("mocked registry value pointing at a missing binary");
+        let human = super::super::windows_logon_health::render_human(&problem);
+        assert!(human.contains("quarantined by antivirus"), "{human}");
+        assert!(human.contains("setup --no-service"), "{human}");
+
+        let report: Report = serde_json::from_value(serde_json::json!({
+            "version": "3.0.0",
+            "data_dir": "/data",
+            "bind": "127.0.0.1:49374",
+            "db_path": "/data/db/memory.sqlite",
+            "counts": {"pages_latest": 0, "pages_all": 0, "sessions": 0, "observations": 0},
+            "providers": ProviderHealthSnapshot::default()
+        }))
+        .unwrap();
+        let endpoint = ServerEndpoint::from_pair(Some("http://127.0.0.1:49374".into()), None);
+        let value = json_report(
+            report,
+            SpoolHealth::default(),
+            0,
+            0,
+            0,
+            None,
+            "denylist",
+            &endpoint,
+            crate::local_auth::AuthPosture::NoneLoopback,
+            Some(&problem),
+        );
+        assert_eq!(
+            value["windows_logon"]["classification"],
+            "logon_binary_missing"
+        );
+        assert_eq!(
+            value["windows_logon"]["executable"],
+            missing.display().to_string()
+        );
+        assert!(
+            value["windows_logon"]["detail"]
+                .as_str()
+                .unwrap()
+                .contains("quarantined by antivirus")
+        );
+        assert_eq!(value["version"], "3.0.0");
+
+        let present = dir.path().join("ai-memory.exe");
+        std::fs::write(&present, b"").unwrap();
+        let present_command = format!(
+            "\"{}\" --data-dir \"{}\" --config \"{}\" service-host",
+            present.display(),
+            dir.path().display(),
+            dir.path().join("config.toml").display()
+        );
+        assert!(
+            super::super::windows_logon_health::inspect(
+                &super::super::windows_logon_health::FixedRunValue(Some(present_command)),
+                &std::path::Path::is_file,
+            )
+            .is_none()
+        );
     }
 
     #[test]

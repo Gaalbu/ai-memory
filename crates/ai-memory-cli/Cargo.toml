@@ -92,6 +92,11 @@ uuid.workspace = true
 
 tempfile.workspace = true
 
+[target.'cfg(windows)'.dependencies]
+# Read the per-user Run value for the quarantine hint. Writing that value
+# stays with the service installer; this crate is only the read.
+windows-registry = "0.100.0"
+
 [dev-dependencies]
 ai-memory-test-support.workspace = true
 tempfile.workspace = true
