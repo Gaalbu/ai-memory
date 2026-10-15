@@ -11,6 +11,13 @@ version in [`docs/changelog/`](docs/changelog/):
 
 ## [Unreleased]
 
+### Added
+- Added the `memory_restore_page` MCP tool: without `rev` it lists the git
+  checkpoints that changed a page, and with `rev` it writes that version back
+  through `memory_write_page` (sanitizer, admission, slots and supersession
+  apply), so an agent can undo a change or bring back a deleted page without
+  root access to `/admin/restore-page`. The MCP surface is now 24 tools.
+
 ### Fixed
 - Fixed the thin-client commands ignoring a custom `bind`, which could write
   into the wrong store. `server_url` defaulted to `http://127.0.0.1:49374`
