@@ -12,6 +12,11 @@ version in [`docs/changelog/`](docs/changelog/):
 ## [Unreleased]
 
 ### Fixed
+- Fixed Antigravity CLI posting a session start and claiming a handoff on every
+  user turn: `invocationNum` restarts at 0 each turn, so only the first turn of
+  a conversation (keyed by `conversationId`) now maps to SessionStart, in the
+  native, shell and PowerShell hooks. Payloads without a `conversationId` keep
+  the previous per-turn behavior.
 - Fixed the thin-client commands ignoring a custom `bind`, which could write
   into the wrong store. `server_url` defaulted to `http://127.0.0.1:49374`
   and was never derived from `bind`, so `ai-memory --data-dir X status` (and
