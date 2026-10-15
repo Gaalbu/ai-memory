@@ -11,6 +11,12 @@ version in [`docs/changelog/`](docs/changelog/):
 
 ## [Unreleased]
 
+### Added
+- Added a thin TypeScript client for the MCP endpoint
+  (`companions/ai-memory-client-ts`): one handshake, session and bearer
+  forwarding, unwrapped tool payloads, typed HTTP/protocol/tool errors, and
+  helpers for pages, query, recent, status and handoffs. (#1165)
+
 ### Fixed
 - Fixed the thin-client commands ignoring a custom `bind`, which could write
   into the wrong store. `server_url` defaulted to `http://127.0.0.1:49374`

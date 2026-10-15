@@ -85,6 +85,13 @@ and slice 5 (the CI check and post-merge hook) ship in 3.0. The companion is
 [`ai-memory-wikisync`](#ai-memory-wikisync-team-wiki-export-and-sync)
 below.
 
+## `ai-memory-client-ts`: TypeScript MCP client
+
+[`ai-memory-client-ts`](../companions/ai-memory-client-ts/README.md) is a
+dependency-free ESM package with `.d.ts` types that wraps the MCP endpoint for
+integrators (#1165). It talks to the server only over MCP, holds no store or
+config, and versions on its own; test it with `npm test` in its directory.
+
 ## `ai-memory-client`: shared private capture privacy
 
 [`ai-memory-client`](../companions/ai-memory-client) supplies four privacy

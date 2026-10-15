@@ -1,0 +1,22 @@
+{
+  "name": "@ai-memory/client",
+  "version": "0.1.0",
+  "description": "Thin typed client for the ai-memory MCP endpoint (Streamable HTTP).",
+  "type": "module",
+  "license": "MIT",
+  "private": true,
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "default": "./src/index.js"
+    }
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  }
+}
