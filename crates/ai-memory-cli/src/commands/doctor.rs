@@ -195,6 +195,11 @@ struct DoctorReport {
     /// Meta Muse Code's settings file, when there is one: whether ai-memory's
     /// hooks and MCP entry are in it, and the two shapes that break Muse.
     muse: Option<MuseReport>,
+    /// Set when the Windows logon entry names an `ai-memory.exe` that is not
+    /// on disk. Omitted otherwise, so a report with no logon entry keeps the
+    /// JSON shape it had.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    windows_logon: Option<super::windows_logon_health::MissingLogonBinary>,
 }
 
 /// One installed ai-memory marketplace plugin and what else wires the same
@@ -652,6 +657,10 @@ pub async fn run(config: &Config, args: crate::cli::DoctorArgs) -> Result<()> {
         .ok()
         .and_then(|path| muse_report(&path));
 
+    // Local, like the spool: quarantine removes the binary and the server
+    // never comes up, which is when this is worth saying.
+    let windows_logon = super::windows_logon_health::inspect_live();
+
     let auth_posture = identity.as_ref().map(|identity| {
         crate::local_auth::AuthPosture::classify(identity.level == "anonymous", &ep.url)
     });
@@ -675,6 +684,7 @@ pub async fn run(config: &Config, args: crate::cli::DoctorArgs) -> Result<()> {
         agentmemory_residue,
         plugins,
         muse,
+        windows_logon,
     };
 
     if args.json {
@@ -1119,6 +1129,10 @@ fn render_human(report: &DoctorReport) {
         println!("  recent window: last {} days\n", report.since_days);
     }
 
+    if let Some(problem) = &report.windows_logon {
+        println!("{}", super::windows_logon_health::render_human(problem));
+    }
+
     if let Some(problem) = &report.marker_capture_problem {
         println!(
             "⚠ {}: the settings marker has an invalid `[capture]` section.\n  \
@@ -1241,7 +1255,63 @@ mod tests {
             agentmemory_residue: Vec::new(),
             plugins: Vec::new(),
             muse: None,
+            windows_logon: None,
         }
+    }
+
+    /// Quarantine deletes the binary and leaves the logon value. Doctor's
+    /// JSON carries the hint, and omits the key when the entry is fine.
+    #[test]
+    fn doctor_reports_a_logon_entry_whose_binary_is_gone() {
+        let dir = tempfile::tempdir().unwrap();
+        let exe = dir.path().join("ai-memory.exe");
+        assert!(!exe.exists());
+        let command = format!(
+            "\"{}\" --data-dir \"{}\" --config \"{}\" service-host",
+            exe.display(),
+            dir.path().display(),
+            dir.path().join("config.toml").display()
+        );
+        let problem = super::super::windows_logon_health::inspect(
+            &super::super::windows_logon_health::FixedRunValue(Some(command)),
+            &std::path::Path::is_file,
+        )
+        .expect("mocked logon value pointing at a missing binary");
+        let human = super::super::windows_logon_health::render_human(&problem);
+        assert!(human.contains("quarantined by antivirus"), "{human}");
+        assert!(human.contains(&problem.executable), "{human}");
+
+        let mut report = health_report(
+            super::super::hook_spool::SpoolHealth::default(),
+            false,
+            None,
+        );
+        report.windows_logon = Some(problem);
+        let json = serde_json::to_value(&report).unwrap();
+        assert_eq!(
+            json["windows_logon"]["classification"],
+            "logon_binary_missing"
+        );
+        assert!(
+            json["windows_logon"]["detail"]
+                .as_str()
+                .unwrap()
+                .contains("does not exist")
+        );
+        assert!(
+            json["windows_logon"]["executable"]
+                .as_str()
+                .unwrap()
+                .ends_with("ai-memory.exe")
+        );
+
+        let quiet = health_report(
+            super::super::hook_spool::SpoolHealth::default(),
+            false,
+            None,
+        );
+        let quiet_json = serde_json::to_value(&quiet).unwrap();
+        assert!(quiet_json.get("windows_logon").is_none());
     }
 
     /// Doctor reads Muse's settings file: the wiring it finds, and the two

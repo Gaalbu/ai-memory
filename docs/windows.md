@@ -510,6 +510,66 @@ top of this page still applies.
 > prereleases. Corrections from anyone running a different Windows or
 > WinSW version are welcome.
 
+## Antivirus / EDR
+
+Bitdefender GravityZone Endpoint Security, with Advanced Threat Control on,
+has quarantined an unsigned `ai-memory.exe` that lives under
+`%LOCALAPPDATA%` ([#1280](https://github.com/akitaonrails/ai-memory/issues/1280)).
+On the machine where this was recorded, that same binary had run for months
+as the WinSW service in
+[Scenario E](#scenario-e-keep-the-server-running-native-windows-service), and
+`ai-memory serve --transport http --enable-web` started from a terminal was
+not flagged. What was flagged was the binary started as a per-user logon
+program: an `ai-memory` value under
+`HKCU\Software\Microsoft\Windows\CurrentVersion\Run` whose command is a
+quoted `ai-memory.exe` ending in `service-host`.
+
+The file that disappeared was the per-user copy, either
+`%LOCALAPPDATA%\Programs\ai-memory\ai-memory.exe` or
+`%LOCALAPPDATA%\ai-memory\ai-memory.exe`. The detection still fired when
+that logon command was started by hand, with no `reg.exe` in the process
+tree, so writing the value through the registry API does not by itself
+clear it.
+
+### What you see
+
+- `ai-memory.exe` is gone from the install directory. GravityZone's action
+  is "Remediated / disinfected (auto)": the file is in quarantine.
+- The process that started it (a PowerShell window, or an agent session
+  that ran `setup`) is killed. Files that same process tree had just moved
+  can be rolled back with it.
+- The server never stays up. Hooks keep calling the missing binary, so
+  capture stops, and no ai-memory command had been saying why.
+- `ai-memory doctor` and `ai-memory status` report `logon_binary_missing`
+  when that Run value names an `ai-memory.exe` that is not on disk. The
+  warning is printed even when `status` cannot reach the server, which is
+  the usual case once the binary is gone.
+
+### How to find the detection
+
+In the GravityZone console, open the incidents for the machine. The ones
+from the field were threat type "Malicious process", threat name
+"Malicious behavior", alert `ATC.Malicious` (high), module Antimalware,
+technology "On-execution: Advanced Threat Control", file signature status
+N/A (the binary is unsigned). The process tree is an unsigned
+`ai-memory.exe` under `%LOCALAPPDATA%`.
+
+### Until an administrator can exclude it
+
+On a managed machine an exclusion is an administrator change, and each
+attempt is itself an incident. Skip the logon entry and start the server
+the way that was not flagged:
+
+```powershell
+ai-memory setup --no-service
+ai-memory serve --transport http --enable-web
+```
+
+`--no-service` does not register a logon entry. A foreground `serve`, or
+the WinSW service in Scenario E, is the path that stayed up. The `doctor`
+and `status` warning goes away once `ai-memory.exe` is back at the path
+the Run value names.
+
 ## Native Hook Command (Claude Code on Windows)
 
 By default on native Windows, Claude Code hooks are rendered using Claude's
