@@ -163,8 +163,13 @@ implemented without a separate decision.** Ordered by leverage.
    the anti-entrenchment guards built in. It is exposed inertly in
    `memory_query explain` and `memory_status` today; **it does not move ranking
    until an operator sets the weight, and turning it on is gated on a positive
-   R2 delta, which the zero-LLM benchmark corpus cannot produce (no
-   consolidation evidence, so the measured delta was 0.000).** Still behind: **typed-edge rank
+   R2 delta, which the zero-LLM benchmark corpus cannot produce.** A first
+   zero-LLM R2 A/B (2026-10-09, weight `0.3`, sample 60, see
+   [`benchmarks/retrieval-ab-r2.md`](benchmarks/retrieval-ab-r2.md)) moved no
+   hit@k/recall@k (measured delta 0.000) and cost +151 ms p95, so the default
+   stays `0.0`: a zero-LLM LongMemEval ingest records almost no
+   `page_evidence` (no consolidation evidence), and the weight needs an
+   LLM-consolidated store before it can show a gain. Still behind: **typed-edge rank
    weighting** (edge kind stays explain-only) and a `contradicts` *authority*
    cap; A5 (#814) surfaces contradictions in `memory_lint` but does not yet
    feed rank.

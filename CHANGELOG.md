@@ -11,6 +11,12 @@ version in [`docs/changelog/`](docs/changelog/):
 
 ## [Unreleased]
 
+### Docs
+- Recorded the first R2 A/B for `[retrieval] belief_authority_weight`
+  (zero-LLM, sample 60): no accuracy change and +151 ms p95, so the default
+  stays `0.0` (`docs/benchmarks/retrieval-ab-r2.md`,
+  `docs/competitive-parity.md`).
+
 ### Fixed
 - Fixed the thin-client commands ignoring a custom `bind`, which could write
   into the wrong store. `server_url` defaulted to `http://127.0.0.1:49374`
