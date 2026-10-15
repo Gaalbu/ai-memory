@@ -113,6 +113,7 @@ pub mod uninstall;
 pub mod upgrade;
 pub mod user;
 pub mod user_service;
+pub(crate) mod windows_logon_health;
 pub mod workstream_search;
 pub mod workstreams;
 pub mod write_page;

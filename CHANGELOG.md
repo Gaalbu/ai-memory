@@ -11,6 +11,15 @@ version in [`docs/changelog/`](docs/changelog/):
 
 ## [Unreleased]
 
+### Added
+- Added a `doctor` and `status` warning when the Windows logon entry
+  (`HKCU\Software\Microsoft\Windows\CurrentVersion\Run` value `ai-memory`)
+  names an `ai-memory.exe` that is not on disk, which is what a quarantine
+  leaves behind. `status` prints it even when the server cannot be reached.
+  `docs/windows.md` now has an Antivirus / EDR section for the Bitdefender
+  Advanced Threat Control detection of an unsigned binary under
+  `%LOCALAPPDATA%`, with `setup --no-service` as the fallback. (#1280)
+
 ### Fixed
 - Fixed the thin-client commands ignoring a custom `bind`, which could write
   into the wrong store. `server_url` defaulted to `http://127.0.0.1:49374`
